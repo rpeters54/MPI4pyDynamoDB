@@ -6,7 +6,11 @@ An implementation of DynamoDB in MPI4py
 
 This package requires the `poetry` dependency manager for python, an installation of python 3.10/3.11, and `open-mpi`
 
+To install poetry:
+
 > pip install poetry
+
+If you don't have python 3.10/3.11 you can install them easily using https://github.com/pyenv/pyenv
 
 Install open-mpi using your preferred package manager or directly here: https://www.open-mpi.org/
 

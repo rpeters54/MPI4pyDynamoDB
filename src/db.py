@@ -219,12 +219,12 @@ class DynamoDB(Generic[T]):
 
 
         status = MPI.Status()
-        message_available = self.comm.iprobe(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
+        message_available = self.comm.iprobe(source=MPI.ANY_SOURCE, tag=HEARTBEAT_TAG, status=status)
         while message_available:
             # recv next item
             source = status.Get_source()
             tag = status.Get_tag()
-            other_table: List[HeartbeatEntry] = self.comm.recv(source=source, tag=tag)
+            other_table: List[HeartbeatEntry] = self.comm.recv(source=source, tag=HEARTBEAT_TAG)
 
             self.logger.debug(f"Got message from {source}")
 
@@ -233,7 +233,7 @@ class DynamoDB(Generic[T]):
 
             # probe the recv line for another message
             status = MPI.Status()
-            message_available = self.comm.iprobe(source=MPI.ANY_SOURCE, tag=MPI.ANY_TAG, status=status)
+            message_available = self.comm.iprobe(source=MPI.ANY_SOURCE, tag=HEARTBEAT_TAG, status=status)
 
         # mark nodes dead, and cull unavailable nodes
         self.table.mark_dead()

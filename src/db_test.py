@@ -5,7 +5,7 @@ import os
 
 from db import DynamoDB, HeartbeatTable, HeartbeatEntry
 
-LOGGING_DIR = '/Users/rileypeters/CSC569/dynamodb/logs/bingo'
+LOGGING_DIR = '/Users/rileypeters/CSC569/dynamodb/logs'
 
 def test_heartbeat():
     """Basic test to verify heartbeat functionality"""
