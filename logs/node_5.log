@@ -1,0 +1,21 @@
+2025-05-21 22:08:17,341 - Node 5 - INFO - Heartbeat thread started
+2025-05-21 22:08:17,341 - Node 5 - INFO - Server initialized with heartbeat thread
+2025-05-21 22:08:22,345 - Node 5 - INFO - Node 5: Neighbors [2, 0, 3, 1]
+2025-05-21 22:08:22,345 - Node 5 - INFO - Node 5: Live nodes after 5s: [0, 1, 2, 3, 4, 5]
+2025-05-21 22:08:22,345 - Node 5 - INFO - Node 5: Heartbeat table details:
+2025-05-21 22:08:22,345 - Node 5 - INFO -   Node 0: Counter=17, Alive=True, Time=1747890501.386963
+2025-05-21 22:08:22,345 - Node 5 - INFO -   Node 1: Counter=19, Alive=True, Time=1747890501.896501
+2025-05-21 22:08:22,345 - Node 5 - INFO -   Node 2: Counter=19, Alive=True, Time=1747890501.896516
+2025-05-21 22:08:22,345 - Node 5 - INFO -   Node 3: Counter=19, Alive=True, Time=1747890501.896517
+2025-05-21 22:08:22,345 - Node 5 - INFO -   Node 4: Counter=17, Alive=True, Time=1747890501.386961
+2025-05-21 22:08:22,346 - Node 5 - INFO -   Node 5: Counter=20, Alive=True, Time=1747890502.14955
+2025-05-21 22:08:32,347 - Node 5 - INFO - Node 5: Live nodes after failure: [0, 1, 3, 4, 5]
+2025-05-21 22:08:32,348 - Node 5 - INFO - Node 5: PASS - Node 2 correctly identified as dead
+2025-05-21 22:08:32,348 - Node 5 - INFO - Node 5: Heartbeat table details:
+2025-05-21 22:08:32,349 - Node 5 - INFO -   Node 0: Counter=58, Alive=True, Time=1747890511.775485
+2025-05-21 22:08:32,349 - Node 5 - INFO -   Node 1: Counter=59, Alive=True, Time=1747890512.0324311
+2025-05-21 22:08:32,349 - Node 5 - INFO -   Node 3: Counter=59, Alive=True, Time=1747890512.027392
+2025-05-21 22:08:32,349 - Node 5 - INFO -   Node 4: Counter=58, Alive=True, Time=1747890511.7754838
+2025-05-21 22:08:32,349 - Node 5 - INFO -   Node 5: Counter=60, Alive=True, Time=1747890512.279714
+2025-05-21 22:08:32,349 - Node 5 - INFO - Stopping heartbeat thread
+2025-05-21 22:08:32,533 - Node 5 - INFO - Heartbeat thread stopped
