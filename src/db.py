@@ -1,6 +1,7 @@
 
 
 from __future__ import annotations
+from hashlib import md5
 from mpi4py import MPI
 from typing import (
     TYPE_CHECKING,
@@ -14,6 +15,7 @@ from typing import (
     Sequence,
     Tuple,
     TypeVar,
+    NamedTuple,
     Union,
 )
 
@@ -28,13 +30,27 @@ comm: MPI.Intracomm = MPI.COMM_WORLD
 rank: int           = comm.Get_rank()
 size: int           = comm.Get_size()
 
+# Important Constants
 FANOUT:                int   = 4
 DEAD_TIMEOUT_S:        float = 1.0
 CULL_TIMEOUT_S:        float = 2.0
 HEARTBEAT_INTERVAL_S:  float = 0.25
 THREAD_JOIN_TIMEOUT_S: float = 5.0
-HEARTBEAT_TAG:         int   = 69
 
+
+
+# MPI Message Tags
+HEARTBEAT_TAG:         int   = 0
+REQUEST_TAG:           int   = 1
+
+
+# Data definition for database operation requests
+class DBRequest(NamedTuple):
+    source: int
+    dest: int
+    operation: str
+    key: str
+    value: T
 
 class HeartbeatEntry:
 
@@ -133,19 +149,41 @@ class HeartbeatTable:
 T = TypeVar('T')
 class DynamoDB(Generic[T]):
 
-    def __init__(self, log_dir: Optional[str] = None):
+    def __init__(self, log_dir: Optional[str] = None, seed: int = 42, ratio_vnode_to_node: int = 2):
         self.comm:              MPI.Intracomm              = comm
         self.rank:              int                        = rank
         self.size:              int                        = size
         self.data:              Dict[str, T]               = {}
-        self.table:             HeartbeatTable             = HeartbeatTable(self.rank, self.size)
+        self.heartbeat_table:   HeartbeatTable             = HeartbeatTable(self.rank, self.size)
         self.neighbors:         List[int]                  = self._init_neighbors(FANOUT)
         self._stop_heartbeat:   bool                       = False
         self._heartbeat_thread: Optional[threading.Thread] = None
         self._pending_sends:    List[MPI.Request]          = [] 
+        self._mapping_table:    List[int]                  = self._create_vnode_table(size, seed, ratio_vnode_to_node)
         self.logger:            logging.Logger             = self._setup_logger(log_dir=log_dir)
         
         self._init_server()
+
+    
+    def _create_vnode_table(
+        self,
+        num_nodes: int,
+        seed: int,
+        ratio_vnode_to_node: int,
+    ) -> List[int]:
+        """Create a table that maps virtual node indices to real nodes"""
+        # Set seed for consistent generation across all processes
+        random.seed(seed)
+        
+        # Distribute virtual nodes as evenly as possible
+        mapping_table = []
+        for rank in range(num_nodes):
+            mapping_table += [rank] * ratio_vnode_to_node
+        
+        # Shuffle to randomize the assignment while maintaining equal distribution
+        random.shuffle(mapping_table)
+        
+        return mapping_table
 
 
     def _setup_logger(self, log_dir: Optional[str] = None) -> logging.Logger:
@@ -174,7 +212,7 @@ class DynamoDB(Generic[T]):
             logger.setLevel(logging.INFO)
         
         return logger
-
+    
 
     def _init_neighbors(self, fanout: int) -> List[int]:
         """Determine what neighbors to gossip to"""
@@ -186,19 +224,19 @@ class DynamoDB(Generic[T]):
         
         # Randomly select 'fanout' number of nodes from valid nodes
         return random.sample(valid_nodes, actual_fanout)
-    
 
-    def _cleanup_completed_sends(self):
-        """Clean up completed send requests"""
-        completed = []
-        for i, req in enumerate(self._pending_sends):
-             # Do a non-blocking check to test for request completion
-            if req.Test(): 
-                completed.append(i)
+
+    def _init_server(self):
+        """Initialize the server with a heartbeat thread"""
         
-        # Remove completed requests
-        for i in reversed(completed):
-            self._pending_sends.pop(i)
+        self._heartbeat_thread = threading.Thread(target=self._heartbeat_loop, daemon=True)
+        self._heartbeat_thread.start()
+        self.logger.info("Server initialized with heartbeat thread")
+
+
+    """
+    Membership Functions
+    """
 
 
     def _gossip(self):
@@ -208,12 +246,12 @@ class DynamoDB(Generic[T]):
         self._cleanup_completed_sends()
 
         # Update heartbeat of node's entry
-        self.table.entry_beat(self.rank)
+        self.heartbeat_table.entry_beat(self.rank)
 
         # Send table to all living neighbors
-        snapshot = self.table.get_table_snapshot()
+        snapshot = self.heartbeat_table.get_table_snapshot()
         for neighbor in self.neighbors:
-            if self.table.entry_missing(neighbor) or self.table.entry_alive(neighbor):
+            if self.heartbeat_table.entry_missing(neighbor) or self.heartbeat_table.entry_alive(neighbor):
                 req = self.comm.isend(snapshot, dest=neighbor, tag=HEARTBEAT_TAG)
                 self._pending_sends.append(req)
 
@@ -229,14 +267,14 @@ class DynamoDB(Generic[T]):
             self.logger.debug(f"Got message from {source}")
 
             # update the table
-            self.table.update(other_table)
+            self.heartbeat_table.update(other_table)
 
             # probe the recv line for another message
             status = MPI.Status()
             message_available = self.comm.iprobe(source=MPI.ANY_SOURCE, tag=HEARTBEAT_TAG, status=status)
 
         # mark nodes dead, and cull unavailable nodes
-        self.table.mark_dead()
+        self.heartbeat_table.mark_dead()
 
 
     def _heartbeat_loop(self):
@@ -254,14 +292,6 @@ class DynamoDB(Generic[T]):
         self.logger.info("Heartbeat thread stopped")
 
 
-    def _init_server(self):
-        """Initialize the server with a heartbeat thread"""
-        
-        self._heartbeat_thread = threading.Thread(target=self._heartbeat_loop, daemon=True)
-        self._heartbeat_thread.start()
-        self.logger.info("Server initialized with heartbeat thread")
-
-
     def stop(self):
         """Stop the heartbeat thread gracefully"""
 
@@ -271,10 +301,109 @@ class DynamoDB(Generic[T]):
             self._heartbeat_thread.join(timeout=THREAD_JOIN_TIMEOUT_S)
 
 
-    def put(self, key: str, value: T):
-        pass
+    def _cleanup_completed_sends(self):
+        """Clean up completed send requests"""
+        completed = []
+        for i, req in enumerate(self._pending_sends):
+             # Do a non-blocking check to test for request completion
+            if req.Test(): 
+                completed.append(i)
+        
+        # Remove completed requests
+        for i in reversed(completed):
+            self._pending_sends.pop(i)
+
+    """
+    Client Interface Helper Functions
+    """
+
+    def _determine_coordinator_vnode(self, key: str) -> int:
+        """Hash the key to find the coordinator it belongs to"""
+        hash = md5(key.encode('UTF-8'))
+        return hash % self.size
+    
+
+    def _get_live_node_by_vnode(
+        self,
+        vnode_idx: int,
+    ) -> Optional[int]:
+        """Try to get the node mapped by the vnode.
+        if not alive, search sequentially for the next viable node"""
+        
+        original_vnode = vnode_idx
+
+        alive = False
+        while not alive:
+            # lookup mapping
+            node_idx = self._mapping_table[vnode_idx]
+
+            # only check liveness if not self
+            if node_idx != self.rank:
+                alive = self.heartbeat_table.entry_alive(node_idx)
+            
+            # made it around the loop without success
+            vnode_idx += 1
+            if vnode_idx == original_vnode:
+                return None
+
+        return node_idx
+        
+    def _send_request_to_coordinator(self, request: DBRequest, timeout: float) -> bool:
+        """send the request to the coordinator node"""
+        try:
+            # Use non-blocking send
+            result = self.comm.isend(request, dest=request.dest, tag=REQUEST_TAG)
+            
+            start_time = time.time()
+            while not result.test():
+                if time.time() - start_time > timeout:
+                    # Cancel the request if possible
+                    try:
+                        request.cancel()
+                    except:
+                        pass
+                    self.logger.error(f"Coordinator Request timed out")   
+                    return False
+                
+                # Small sleep to avoid busy waiting
+                time.sleep(0.001)
+            
+            self.logger.info(f"Coordinator Request send successfully")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Error sending to node: {request.dest}")   
+            return False
 
 
+    """
+    Client Interface Functions
+    """
+
+
+    def put(self, key: str, value: T) -> bool:
+        self.logger.info(f"Preparing 'PUT' with key: {key}")
+        # find the coordinator node to send to
+        vnode_idx = self._determine_coordinator_vnode(key)
+        node_idx = self._get_live_node_by_vnode(vnode_idx)
+        if node_idx is None:
+            self.logger.error(f"Failed to find valid coordinator for key: {key}")
+            return False
+        
+        # format and send the message
+        request = DBRequest(self.rank, node_idx, 'PUT', key, value)
+        return self._send_request_to_coordinator(request, DEAD_TIMEOUT_S)
+        
+        
     def get(self, key: str) -> T:
-        pass
-
+        self.logger.info(f"Preparing 'GET' with key: {key}")
+        # find the coordinator node to send to
+        vnode_idx = self._determine_coordinator_vnode(key)
+        node_idx = self._get_live_node_by_vnode(vnode_idx)
+        if node_idx is None:
+            self.logger.error(f"Failed to find valid coordinator for key: {key}")
+            return False
+        
+        # format and send the message
+        request = DBRequest(self.rank, node_idx, 'GET', key, None)
+        return self._send_request_to_coordinator(request, DEAD_TIMEOUT_S)
