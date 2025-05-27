@@ -1,21 +1,42 @@
-2025-05-21 22:48:04,086 - Node 0 - INFO - Heartbeat thread started
-2025-05-21 22:48:04,086 - Node 0 - INFO - Server initialized with heartbeat thread
-2025-05-21 22:48:09,089 - Node 0 - INFO - Node 0: Neighbors [2, 5, 1, 4]
-2025-05-21 22:48:09,089 - Node 0 - INFO - Node 0: Live nodes after 5s: [0, 1, 2, 3, 4, 5]
-2025-05-21 22:48:09,089 - Node 0 - INFO - Node 0: Heartbeat table details:
-2025-05-21 22:48:09,089 - Node 0 - INFO -   Node 0: Counter=20, Alive=True, Time=1747892888.9218361
-2025-05-21 22:48:09,089 - Node 0 - INFO -   Node 1: Counter=19, Alive=True, Time=1747892888.632014
-2025-05-21 22:48:09,089 - Node 0 - INFO -   Node 2: Counter=18, Alive=True, Time=1747892888.3814569
-2025-05-21 22:48:09,090 - Node 0 - INFO -   Node 3: Counter=18, Alive=True, Time=1747892888.381477
-2025-05-21 22:48:09,090 - Node 0 - INFO -   Node 4: Counter=18, Alive=True, Time=1747892888.381462
-2025-05-21 22:48:09,090 - Node 0 - INFO -   Node 5: Counter=19, Alive=True, Time=1747892888.6569118
-2025-05-21 22:48:19,092 - Node 0 - INFO - Node 0: Live nodes after failure: [0, 1, 3, 4, 5]
-2025-05-21 22:48:19,092 - Node 0 - INFO - Node 0: PASS - Node 2 correctly identified as dead
-2025-05-21 22:48:19,093 - Node 0 - INFO - Node 0: Heartbeat table details:
-2025-05-21 22:48:19,093 - Node 0 - INFO -   Node 0: Counter=60, Alive=True, Time=1747892899.018186
-2025-05-21 22:48:19,093 - Node 0 - INFO -   Node 1: Counter=60, Alive=True, Time=1747892898.9680269
-2025-05-21 22:48:19,093 - Node 0 - INFO -   Node 3: Counter=59, Alive=True, Time=1747892898.7751849
-2025-05-21 22:48:19,093 - Node 0 - INFO -   Node 4: Counter=59, Alive=True, Time=1747892898.7751858
-2025-05-21 22:48:19,093 - Node 0 - INFO -   Node 5: Counter=60, Alive=True, Time=1747892898.985564
-2025-05-21 22:48:19,093 - Node 0 - INFO - Stopping heartbeat thread
-2025-05-21 22:48:19,270 - Node 0 - INFO - Heartbeat thread stopped
+2025-05-26 20:35:49,486 - Node 0 - INFO - Node 0 initialized. N=3, W=2, R=2
+2025-05-26 20:35:49,487 - Node 0 - INFO - Heartbeat thread started
+2025-05-26 20:35:49,487 - Node 0 - INFO - Server initialized with heartbeat thread
+2025-05-26 20:35:49,487 - Node 0 - INFO - Server initialized with client thread
+2025-05-26 20:35:49,487 - Node 0 - INFO - Server initialized with helper thread
+2025-05-26 20:35:49,488 - Node 0 - INFO - Node 0: Starting database operations test (N=3, W=2, R=2).
+2025-05-26 20:35:50,488 - Node 0 - WARNING - Helper thread timed out (may happen when db.Stop() is called)
+2025-05-26 20:35:50,488 - Node 0 - WARNING - Client thread timed out (may happen when db.Stop() is called)
+2025-05-26 20:35:51,488 - Node 0 - WARNING - Helper thread timed out (may happen when db.Stop() is called)
+2025-05-26 20:35:51,488 - Node 0 - WARNING - Client thread timed out (may happen when db.Stop() is called)
+2025-05-26 20:35:52,489 - Node 0 - WARNING - Helper thread timed out (may happen when db.Stop() is called)
+2025-05-26 20:35:52,490 - Node 0 - WARNING - Client thread timed out (may happen when db.Stop() is called)
+2025-05-26 20:35:52,494 - Node 0 - INFO - Node 0: Attempting PUT for key 'testKey0_1' with value 'valueForNode0'
+2025-05-26 20:35:52,494 - Node 0 - INFO - Client 0 initiating 'PUT' for key: testKey0_1
+2025-05-26 20:35:52,496 - Node 0 - INFO - Client 0 received confirm put from 5
+2025-05-26 20:35:52,499 - Node 0 - INFO - Helper 0 received commit request from 5 to replicate valueForNode3 for key testKey3_1
+2025-05-26 20:35:52,499 - Node 0 - INFO - database state: {'testKey3_1': 'valueForNode3'}
+2025-05-26 20:35:52,500 - Node 0 - INFO - Client 0 received final response for PUT key 'testKey0_1': Status SUCCESS
+2025-05-26 20:35:52,500 - Node 0 - INFO - Node 0: PUT for 'testKey0_1' reported SUCCESS.
+2025-05-26 20:35:52,500 - Node 0 - INFO - Node 0: Attempting PUT for key 'testKey0_2' with value '[0, 1, 2]'
+2025-05-26 20:35:52,500 - Node 0 - INFO - Client 0 initiating 'PUT' for key: testKey0_2
+2025-05-26 20:35:52,501 - Node 0 - INFO - Client 0 initiating 'PUT' for key: testKey5_2
+2025-05-26 20:35:52,501 - Node 0 - INFO - Client 0 preference list for 'PUT': [np.int64(0), np.int64(5), np.int64(2)]
+2025-05-26 20:35:52,506 - Node 0 - INFO - Client 0 initiating 'PUT' for key: testKey1_2
+2025-05-26 20:35:52,506 - Node 0 - INFO - Client 0 preference list for 'PUT': [np.int64(0), np.int64(4), np.int64(2)]
+2025-05-26 20:35:52,516 - Node 0 - INFO - Client 0 received final response for PUT key 'testKey0_2': Status SUCCESS
+2025-05-26 20:35:52,516 - Node 0 - INFO - Node 0: PUT for 'testKey0_2' reported SUCCESS.
+2025-05-26 20:35:52,516 - Node 0 - INFO - Client 0 initiating 'GET' for key: testKey0_1
+2025-05-26 20:35:52,518 - Node 0 - INFO - Helper 0 received get request from 5 to return valueForNode3 for key testKey3_1
+2025-05-26 20:35:52,520 - Node 0 - INFO - Client 0 received final response for GET key 'testKey0_1': Status SUCCESS, Value: True
+2025-05-26 20:35:52,520 - Node 0 - INFO - Node 0: GET for 'testKey0_1' PASS. Value: '['valueForNode0', 'valueForNode0', 'valueForNode0']'
+2025-05-26 20:35:52,520 - Node 0 - INFO - Client 0 initiating 'GET' for key: testKey0_2
+2025-05-26 20:35:52,524 - Node 0 - INFO - Client 0 initiating 'GET' for key: testKey1_2
+2025-05-26 20:35:52,524 - Node 0 - INFO - Client 0 preference list for 'GET': [np.int64(0), np.int64(4), np.int64(2)]
+2025-05-26 20:35:53,519 - Node 0 - WARNING - Helper thread timed out (may happen when db.Stop() is called)
+2025-05-26 20:35:53,521 - Node 0 - WARNING - Node 0: GET for 'testKey0_2' returned None
+2025-05-26 20:35:53,521 - Node 0 - INFO - Stopping heartbeat thread
+2025-05-26 20:35:53,525 - Node 0 - INFO - for client local lookup retrieved: [1, 2, 3]
+2025-05-26 20:35:53,525 - Node 0 - INFO - Client thread stopped.
+2025-05-26 20:35:53,551 - Node 0 - INFO - Heartbeat thread stopped
+2025-05-26 20:35:53,551 - Node 0 - INFO - Stopping database thread
+2025-05-26 20:35:54,520 - Node 0 - INFO - Helper thread stopped.

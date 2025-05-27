@@ -1,21 +1,53 @@
-2025-05-21 22:48:04,087 - Node 4 - INFO - Heartbeat thread started
-2025-05-21 22:48:04,087 - Node 4 - INFO - Server initialized with heartbeat thread
-2025-05-21 22:48:09,091 - Node 4 - INFO - Node 4: Neighbors [5, 2, 1, 0]
-2025-05-21 22:48:09,091 - Node 4 - INFO - Node 4: Live nodes after 5s: [0, 1, 2, 3, 4, 5]
-2025-05-21 22:48:09,091 - Node 4 - INFO - Node 4: Heartbeat table details:
-2025-05-21 22:48:09,091 - Node 4 - INFO -   Node 0: Counter=19, Alive=True, Time=1747892888.641367
-2025-05-21 22:48:09,091 - Node 4 - INFO -   Node 1: Counter=19, Alive=True, Time=1747892888.632014
-2025-05-21 22:48:09,091 - Node 4 - INFO -   Node 2: Counter=19, Alive=True, Time=1747892888.674198
-2025-05-21 22:48:09,091 - Node 4 - INFO -   Node 3: Counter=19, Alive=True, Time=1747892888.674191
-2025-05-21 22:48:09,092 - Node 4 - INFO -   Node 4: Counter=20, Alive=True, Time=1747892888.9257548
-2025-05-21 22:48:09,092 - Node 4 - INFO -   Node 5: Counter=17, Alive=True, Time=1747892888.128027
-2025-05-21 22:48:19,092 - Node 4 - INFO - Node 4: Live nodes after failure: [0, 1, 3, 4, 5]
-2025-05-21 22:48:19,092 - Node 4 - INFO - Node 4: PASS - Node 2 correctly identified as dead
-2025-05-21 22:48:19,092 - Node 4 - INFO - Node 4: Heartbeat table details:
-2025-05-21 22:48:19,093 - Node 4 - INFO -   Node 0: Counter=60, Alive=True, Time=1747892899.018186
-2025-05-21 22:48:19,093 - Node 4 - INFO -   Node 1: Counter=60, Alive=True, Time=1747892898.9680269
-2025-05-21 22:48:19,093 - Node 4 - INFO -   Node 3: Counter=59, Alive=True, Time=1747892898.7751849
-2025-05-21 22:48:19,093 - Node 4 - INFO -   Node 4: Counter=60, Alive=True, Time=1747892899.025821
-2025-05-21 22:48:19,093 - Node 4 - INFO -   Node 5: Counter=59, Alive=True, Time=1747892898.7341518
-2025-05-21 22:48:19,093 - Node 4 - INFO - Stopping heartbeat thread
-2025-05-21 22:48:19,278 - Node 4 - INFO - Heartbeat thread stopped
+2025-05-26 20:35:49,486 - Node 4 - INFO - Node 4 initialized. N=3, W=2, R=2
+2025-05-26 20:35:49,487 - Node 4 - INFO - Heartbeat thread started
+2025-05-26 20:35:49,487 - Node 4 - INFO - Server initialized with heartbeat thread
+2025-05-26 20:35:49,487 - Node 4 - INFO - Server initialized with client thread
+2025-05-26 20:35:49,488 - Node 4 - INFO - Server initialized with helper thread
+2025-05-26 20:35:49,488 - Node 4 - INFO - Node 4: Starting database operations test (N=3, W=2, R=2).
+2025-05-26 20:35:50,488 - Node 4 - WARNING - Helper thread timed out (may happen when db.Stop() is called)
+2025-05-26 20:35:50,488 - Node 4 - WARNING - Client thread timed out (may happen when db.Stop() is called)
+2025-05-26 20:35:51,489 - Node 4 - WARNING - Client thread timed out (may happen when db.Stop() is called)
+2025-05-26 20:35:51,489 - Node 4 - WARNING - Helper thread timed out (may happen when db.Stop() is called)
+2025-05-26 20:35:52,490 - Node 4 - WARNING - Helper thread timed out (may happen when db.Stop() is called)
+2025-05-26 20:35:52,490 - Node 4 - WARNING - Client thread timed out (may happen when db.Stop() is called)
+2025-05-26 20:35:52,494 - Node 4 - INFO - Node 4: Attempting PUT for key 'testKey4_1' with value 'valueForNode4'
+2025-05-26 20:35:52,494 - Node 4 - INFO - Client 4 initiating 'PUT' for key: testKey4_1
+2025-05-26 20:35:52,495 - Node 4 - INFO - Client 4 initiating 'PUT' for key: testKey5_1
+2025-05-26 20:35:52,495 - Node 4 - INFO - Client 4 preference list for 'PUT': [np.int64(4), np.int64(2), np.int64(1)]
+2025-05-26 20:35:52,496 - Node 4 - INFO - Client 4 received confirm put from 5
+2025-05-26 20:35:52,497 - Node 4 - INFO - Client 4 received confirm put from 3
+2025-05-26 20:35:52,498 - Node 4 - INFO - Helper 4 received commit request from 5 to replicate valueForNode3 for key testKey3_1
+2025-05-26 20:35:52,498 - Node 4 - INFO - database state: {'testKey3_1': 'valueForNode3'}
+2025-05-26 20:35:52,498 - Node 4 - INFO - Helper 4 received commit request from 3 to replicate valueForNode0 for key testKey0_1
+2025-05-26 20:35:52,498 - Node 4 - INFO - Client 4 received final response for PUT key 'testKey4_1': Status SUCCESS
+2025-05-26 20:35:52,499 - Node 4 - INFO - database state: {'testKey3_1': 'valueForNode3', 'testKey5_1': 'valueForNode5', 'testKey0_1': 'valueForNode0'}
+2025-05-26 20:35:52,499 - Node 4 - INFO - Node 0: PUT for 'testKey4_1' reported SUCCESS.
+2025-05-26 20:35:52,499 - Node 4 - INFO - Node 4: Attempting PUT for key 'testKey4_2' with value '[4, 5, 6]'
+2025-05-26 20:35:52,499 - Node 4 - INFO - Client 4 initiating 'PUT' for key: testKey4_2
+2025-05-26 20:35:52,507 - Node 4 - INFO - Client 4 received confirm put from 0
+2025-05-26 20:35:52,509 - Node 4 - INFO - Helper 4 received commit request from 0 to replicate [1, 2, 3] for key testKey1_2
+2025-05-26 20:35:52,509 - Node 4 - INFO - database state: {'testKey3_1': 'valueForNode3', 'testKey5_1': 'valueForNode5', 'testKey0_1': 'valueForNode0', 'testKey1_2': [1, 2, 3]}
+2025-05-26 20:35:52,509 - Node 4 - INFO - Client 4 received confirm put from 3
+2025-05-26 20:35:52,512 - Node 4 - INFO - Helper 4 received commit request from 3 to replicate [4, 5, 6] for key testKey4_2
+2025-05-26 20:35:52,512 - Node 4 - INFO - database state: {'testKey3_1': 'valueForNode3', 'testKey5_1': 'valueForNode5', 'testKey0_1': 'valueForNode0', 'testKey1_2': [1, 2, 3], 'testKey4_2': [4, 5, 6]}
+2025-05-26 20:35:52,513 - Node 4 - INFO - Client 4 received final response for PUT key 'testKey4_2': Status SUCCESS
+2025-05-26 20:35:52,513 - Node 4 - INFO - Node 0: PUT for 'testKey4_2' reported SUCCESS.
+2025-05-26 20:35:52,516 - Node 4 - INFO - Client 4 initiating 'GET' for key: testKey4_1
+2025-05-26 20:35:52,517 - Node 4 - INFO - Client 4 initiating 'GET' for key: testKey5_1
+2025-05-26 20:35:52,517 - Node 4 - INFO - Client 4 preference list for 'GET': [np.int64(4), np.int64(2), np.int64(1)]
+2025-05-26 20:35:52,517 - Node 4 - INFO - Helper 4 received get request from 3 to return valueForNode0 for key testKey0_1
+2025-05-26 20:35:52,517 - Node 4 - INFO - Helper 4 received get request from 5 to return valueForNode3 for key testKey3_1
+2025-05-26 20:35:52,521 - Node 4 - INFO - Client 4 received final response for GET key 'testKey4_1': Status SUCCESS, Value: True
+2025-05-26 20:35:52,521 - Node 4 - INFO - Node 4: GET for 'testKey4_1' PASS. Value: '['valueForNode4', 'valueForNode4', 'valueForNode4']'
+2025-05-26 20:35:52,521 - Node 4 - INFO - Client 4 initiating 'GET' for key: testKey4_2
+2025-05-26 20:35:52,525 - Node 4 - INFO - Helper 4 received get request from 0 to return [1, 2, 3] for key testKey1_2
+2025-05-26 20:35:52,525 - Node 4 - INFO - Helper 4 received get request from 3 to return [4, 5, 6] for key testKey4_2
+2025-05-26 20:35:52,528 - Node 4 - INFO - Client 4 received final response for GET key 'testKey4_2': Status SUCCESS, Value: True
+2025-05-26 20:35:52,528 - Node 4 - INFO - Node 4: GET for 'testKey4_2' PASS. Value: '[[4, 5, 6], [4, 5, 6], [4, 5, 6]]'
+2025-05-26 20:35:52,528 - Node 4 - INFO - Stopping heartbeat thread
+2025-05-26 20:35:52,534 - Node 4 - INFO - Heartbeat thread stopped
+2025-05-26 20:35:52,534 - Node 4 - INFO - Stopping database thread
+2025-05-26 20:35:53,517 - Node 4 - INFO - for client local lookup retrieved: valueForNode5
+2025-05-26 20:35:53,518 - Node 4 - INFO - Client thread stopped.
+2025-05-26 20:35:53,518 - Node 4 - INFO - Stopping database thread
+2025-05-26 20:35:53,526 - Node 4 - INFO - Helper thread stopped.
