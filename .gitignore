@@ -1,0 +1,10 @@
+venv
+
+# Log files
+logs/
+
+# Python specific
+src/__pycache__/
+*.pyc
+*.pyo
+*.pyd
