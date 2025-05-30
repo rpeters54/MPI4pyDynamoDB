@@ -108,6 +108,7 @@ class HeartbeatEntry:
     def combine(self, other: HeartbeatEntry):
         if (other.counter > self.counter):
             self.counter = other.counter
+            #TODO: should this be self.ticks = time.time()?
             self.ticks   = other.ticks
             self.alive   = other.alive
 
@@ -331,6 +332,8 @@ class DynamoDB(Generic[T]):
         # Send table to all living neighbors
         snapshot = self.heartbeat_table.get_table_snapshot()
         for neighbor in self.neighbors:
+            # we assume that the neighbor is alive but we don't have information about them yet if we are 
+            # missing the corresponding table entry
             if self.heartbeat_table.entry_missing(neighbor) or self.heartbeat_table.entry_alive(neighbor):
                 req = self.comm.isend(snapshot, dest=neighbor, tag=HEARTBEAT_TAG)
                 self._pending_sends.append(req)
