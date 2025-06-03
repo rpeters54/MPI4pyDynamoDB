@@ -29,7 +29,7 @@ comm: MPI.Intracomm = MPI.COMM_WORLD
 rank: int = comm.Get_rank()
 size: int = comm.Get_size()
 
-# Important Constants
+# Timeout Constants
 FANOUT:                int   = 4
 DEAD_TIMEOUT_S:        float = 1.0
 CULL_TIMEOUT_S:        float = 2.0
@@ -53,9 +53,14 @@ CLIENT_RESPONSE_TAG:  int = 2
 REPLICA_REQUEST_TAG:  int = 3
 REPLICA_RESPONSE_TAG: int = 4
 
+# This function makes it so I can send a specific 
+# type of message to a specific node in the system
 def gen_tag(base_tag: int, rank: int) -> int:
     return base_tag * size + rank
 
+"""
+Message Objects sent via MPI
+"""
 
 # Generic TypeVar
 T = TypeVar('T')
@@ -70,7 +75,6 @@ class DBOperation:
 class DBOperationStatus:
     SUCCESS: str = "SUCCESS"
     FAILURE: str = "FAILURE"
-
 
 # Data definition for database operation requests
 class DBRequest(NamedTuple, Generic[T]):
@@ -91,7 +95,15 @@ class DBStore(NamedTuple, Generic[T]):
     data: Dict[str, T]   = {}
     lock: threading.Lock = threading.Lock()
 
+"""
+Heartbeating logic
+"""
+
 class HeartbeatEntry:
+    """
+    Entries in the heartbeat table,
+    Provides helper functions to combine them
+    """
 
     def __init__(self, counter: int=0, ticks: float=0, alive: bool=True):
         self.counter: int  = counter
@@ -113,6 +125,10 @@ class HeartbeatEntry:
 
 
 class HeartbeatTable:
+    """
+    HeartbeatTable is a numpy array of Heartbeat Entries
+    provides some helper functions to access the data
+    """
 
     def __init__(self, idx: int, num_nodes: int):
         self._table: NDArray[np.object_] = np.full(num_nodes, None, dtype=object)
@@ -184,9 +200,47 @@ class HeartbeatTable:
                     snapshot.append(None)
             return snapshot
 
+"""
+Database Node Definition and Functions
+"""
 
 T = TypeVar('T')
 class DynamoDB(Generic[T]):
+    """
+    A DynamoDB node provides a distributed key-value store by working with other DynamoDB process spawned by MPI
+    ------------------------------------------------------------------------------------------------------------
+    It is composed of 4 threads:
+    1. The main thread can be interacted with by the client, who can make get and put requests
+    2. The client thread receives get and put requests from the main thread and handles the desired database operation
+    3. The helper thread receives requests from the client thread to retrieve and commit data (acts as replica)
+    4. The heartbeat thread tracks the nodes that are alive by intermittently sending and receiving heartbeat tables
+
+    Get Request:
+        - On the main thread: 
+            - the client calls the get funtion with the query string
+            - the main thread finds the real node the string belongs to and sends the request to its client thread
+        - On the client thread:
+            - the thread determines what real nodes should have replicas of the data
+            - it requests the data the nodes
+            - if a read quorum of nodes responds, it replies to the main thread with a list containing its value and all the replicas' values
+            - otherwise it responds with a fail
+        - On the helper thread:
+            - the thread receives a request for the data in its store
+            - it replies with the data if it exists, or responds with a fail
+
+    Put Request:
+        - On the main thread: 
+            - the client calls the put funtion with the query string and associated data
+            - the main thread finds the real node the string belongs to and sends the request to its client thread
+        - On the client thread:
+            - the thread determines what real nodes should have replicas of the data
+            - it sends an initial request to ensure that all nodes are ready to put the value
+            - if a read quorum of nodes responds, it sends a commit request to all replicas and commits the value
+            - otherwise it responds with a fail
+        - On the helper thread:
+            - the thread receives a request to update the store, it always responds that it can (client request should only fail if the node is dead)
+            - the thread then gets a request to commit the data, so it adds the data to its store and acknowledges
+    """
 
     def __init__(self, log_dir: Optional[str] = None, seed: int = 42, ratio_vnode_to_node: int = 2):
         self.comm:              MPI.Intracomm              = comm
@@ -202,16 +256,8 @@ class DynamoDB(Generic[T]):
         self._pending_sends:    deque[MPI.Request]         = deque()
 
         actual_ratio = max(1, ratio_vnode_to_node)
-        if self.size > 0:
-            self._mapping_table: NDArray[np.int64]         = self._create_vnode_table(self.size, seed, actual_ratio)
-        else:
-            self._mapping_table: NDArray[np.int64]         = np.array([], dtype=np.int64)
-            global REPLICATION_FACTOR, WRITE_QUORUM_W, READ_QUORUM_R # Update globals if size is 0
-            REPLICATION_FACTOR = 0
-            WRITE_QUORUM_W = 0
-            READ_QUORUM_R = 0
+        self._mapping_table: NDArray[np.int64]             = self._create_vnode_table(self.size, seed, actual_ratio)
         self.logger:            logging.Logger             = self._setup_logger(log_dir=log_dir)
-        
         self.logger.info(f"Node {self.rank} initialized. N={REPLICATION_FACTOR}, W={WRITE_QUORUM_W}, R={READ_QUORUM_R}")
 
         self._init_server()
@@ -396,7 +442,11 @@ class DynamoDB(Generic[T]):
         return hash_val % num_vnodes
 
     def _get_preference_list(self, key: str, num_target_replicas: int) -> List[int]:
-        """Gets N distinct live physical nodes for a key's preference list."""
+        """
+        Gets N distinct live physical nodes for a key's preference list.
+        The first node in the list is the main node that handles the data.
+        The nodes afterward are the replicas.
+        """
         preference_list: List[int] = []
         if num_target_replicas == 0 or len(self._mapping_table) == 0:
             return preference_list
@@ -423,6 +473,7 @@ class DynamoDB(Generic[T]):
 
 
     def _client_loop(self):
+        """Loop that receives put and get requests from the main thread"""
         while not self._stop_flag:
             request: Optional[DBRequest] = recv_with_timeout(comm, source=MPI.ANY_SOURCE, tag=gen_tag(CLIENT_REQUEST_TAG, self.rank), timeout=MSG_TIMEOUT_S)
             if self._stop_flag: break
@@ -445,6 +496,7 @@ class DynamoDB(Generic[T]):
 
 
     def _helper_loop(self):
+        """Loop that receives replica requests from the client loop"""
         thread_pool: deque[threading.Thread] = deque()
       
         while not self._stop_flag:
@@ -486,6 +538,8 @@ class DynamoDB(Generic[T]):
 
 
     def _client_put(self, request: DBRequest[T]):
+        """Add a key-value pair to the database after getting consensus from replicas"""
+
         self.logger.info(f"Client {self.rank} initiating 'PUT' for key: {request.key}")
         
         # get list of replicas or return failure if impossible
@@ -596,6 +650,7 @@ class DynamoDB(Generic[T]):
 
 
     def _client_get(self, request: DBRequest[T]):
+        """Get the values associated with a key after querying replicas"""
         self.logger.info(f"Client {self.rank} initiating 'GET' for key: {request.key}")
         
         # get list of replicas or return failure if impossible
